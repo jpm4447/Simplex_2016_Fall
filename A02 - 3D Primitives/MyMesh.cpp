@@ -275,9 +275,10 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	//vector3 topPoint((0 relative to the shape), a_fHeight, (0 relative to the shape));
+	//vector3 bottomPoint((0 relative to the shape), (0 relative to the shape), (0 relative to the shape));
+
+	
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
