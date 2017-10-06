@@ -56,17 +56,21 @@ void Application::Display(void)
 
 	//calculate the current position
 	vector3 v3CurrentPos;
+
+	// location in the nodes
+	static uint node = 0;
 	
-
-
-
-
-	//your code goes here
-	v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
-	//-------------------
+	// calculate model position
+	float fPercentage = MapValue(fTimer, 0.0f, 2.0f, 0.0f, 1.0f);
+	v3CurrentPos = glm::lerp(m_stopsList[node], m_stopsList[(node + 1) % m_stopsList.size()], fPercentage);
 	
-
-
+	// has the digger passed the current segment
+	if (fPercentage > 1.0f)
+	{
+		node++;
+		fTimer = m_pSystem->GetDeltaTime(uClock);
+		node %= m_stopsList.size();	// make sure the node does not exceed bounds
+	}
 	
 	matrix4 m4Model = glm::translate(v3CurrentPos);
 	m_pModel->SetModelMatrix(m4Model);
