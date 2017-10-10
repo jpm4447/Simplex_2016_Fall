@@ -275,10 +275,42 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Release();
 	Init();
 
-	//vector3 topPoint((0 relative to the shape), a_fHeight, (0 relative to the shape));
-	//vector3 bottomPoint((0 relative to the shape), (0 relative to the shape), (0 relative to the shape));
+	// variables
+	vector3 topPoint(0.0f, a_fHeight, 0.0f);
+	vector3 btmPoint(0.0f, 0.0f, 0.0f);
+	std::vector<vector3> pointRing;
 
-	
+	// calculate positions around the base point using subdivisions and radius
+	for (int p = 0; p < a_nSubdivisions; p++)
+	{
+		float pointX = a_fRadius * cos(((p * (2 * (float)PI)) / a_nSubdivisions) );
+		float pointY = 0.0f;
+		float pointZ = a_fRadius * sin((p * (2 * (float)PI)) / a_nSubdivisions);
+
+		pointRing.push_back(vector3(pointX, pointY, pointZ));
+	}
+
+	// render out faces
+	for (int x = 0; x < a_nSubdivisions; x++)
+	{
+		if (x == a_nSubdivisions - 1)
+		{
+			// addTri(top, x, 0)
+			AddTri(pointRing[0], pointRing[x], topPoint);
+			
+			// addTri(bottom, x, 0)
+			AddTri(btmPoint, pointRing[x], pointRing[0]);
+		}
+		else
+		{
+			// addTri(top, x, x++)
+			AddTri(pointRing[x + 1], pointRing[x], topPoint);
+
+			// addTri(bottom, x, x++)
+			AddTri(btmPoint, pointRing[x], pointRing[x + 1]);
+		}
+	}
+
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -300,9 +332,48 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	// variables
+	vector3 topPoint(0.0f, a_fHeight, 0.0f);
+	vector3 btmPoint(0.0f, 0.0f, 0.0f);
+	std::vector<vector3> pointRingTop;
+	std::vector<vector3> pointRingBtm;
+
+	// calculate positions around the base point and top point using subdivisions and radius
+	for (int p = 0; p < a_nSubdivisions; p++)
+	{
+		float pointX = a_fRadius * cos(((p * (2 * (float)PI)) / a_nSubdivisions));
+		float pointZ = a_fRadius * sin((p * (2 * (float)PI)) / a_nSubdivisions);
+
+		pointRingBtm.push_back(vector3(pointX, 0.0f, pointZ));
+		pointRingTop.push_back(vector3(pointX, a_fHeight, pointZ));
+	}
+
+	// render out faces
+	for (int x = 0; x < a_nSubdivisions; x++)
+	{
+		if (x == a_nSubdivisions - 1)
+		{
+			// addTri(top, x, 0)
+			AddTri(pointRingTop[0], pointRingTop[x], topPoint);
+
+			// addTri(bottom, x, 0)
+			AddTri(btmPoint, pointRingBtm[x], pointRingBtm[0]);
+
+			// addQuad(btm0, btm, top0, top)
+			AddQuad(pointRingBtm[0], pointRingBtm[x], pointRingTop[0], pointRingTop[x]);
+		}
+		else
+		{
+			// addTri(top, x, x++)
+			AddTri(pointRingTop[x + 1], pointRingTop[x], topPoint);
+
+			// addTri(bottom, x, x++)
+			AddTri(btmPoint, pointRingBtm[x], pointRingBtm[x + 1]);
+
+			// addQuad(btm+1, btm, top+1, top)
+			AddQuad(pointRingBtm[x + 1], pointRingBtm[x], pointRingTop[x + 1], pointRingTop[x]);
+		}
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -330,9 +401,68 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	// variables
+	vector3 topPoint(0.0f, a_fHeight, 0.0f);
+	vector3 btmPoint(0.0f, 0.0f, 0.0f);
+	std::vector<vector3> outerPointRingTop;
+	std::vector<vector3> outerPointRingBtm;
+	std::vector<vector3> innerPointRingTop;
+	std::vector<vector3> innerPointRingBtm;
+
+	// calculate positions around the base point and top point using subdivisions and radius
+	for (int p = 0; p < a_nSubdivisions; p++)
+	{
+		// outer radius
+		float oPointX = a_fOuterRadius * cos(((p * (2 * (float)PI)) / a_nSubdivisions));
+		float oPointZ = a_fOuterRadius * sin((p * (2 * (float)PI)) / a_nSubdivisions);
+
+		outerPointRingBtm.push_back(vector3(oPointX, 0.0f, oPointZ));
+		outerPointRingTop.push_back(vector3(oPointX, a_fHeight, oPointZ));
+
+		// inner radius
+		float iPointX = a_fInnerRadius * cos(((p * (2 * (float)PI)) / a_nSubdivisions));
+		float iPointZ = a_fInnerRadius * sin((p * (2 * (float)PI)) / a_nSubdivisions);
+
+		innerPointRingBtm.push_back(vector3(iPointX, 0.0f, iPointZ));
+		innerPointRingTop.push_back(vector3(iPointX, a_fHeight, iPointZ));
+	}
+
+	// render out faces
+	for (int x = 0; x < a_nSubdivisions; x++)
+	{
+		if (x == a_nSubdivisions - 1)
+		{
+			// sides
+			// addQuad(btm0, btm, top0, top)
+			AddQuad(outerPointRingBtm[0], outerPointRingBtm[x], outerPointRingTop[0], outerPointRingTop[x]);
+
+			// addQuad(top, top0, btm, btm0)
+			AddQuad(innerPointRingTop[0], innerPointRingTop[x], innerPointRingBtm[0], innerPointRingBtm[x]);
+
+			// top and bottom
+			// addQuad(btm+1, btm, top+1, top)
+			AddQuad(outerPointRingTop[0], outerPointRingTop[x], innerPointRingTop[0], innerPointRingTop[x]);
+
+			// addQuad(top, top+1, btm, btm+1)
+			AddQuad(innerPointRingBtm[0], innerPointRingBtm[x], outerPointRingBtm[0], outerPointRingBtm[x]);
+		}
+		else
+		{
+			// sidea
+			// addQuad(btm+1, btm, top+1, top)
+			AddQuad(outerPointRingBtm[x + 1], outerPointRingBtm[x], outerPointRingTop[x + 1], outerPointRingTop[x]);
+
+			// addQuad(top, top+1, btm, btm+1)
+			AddQuad(innerPointRingTop[x + 1], innerPointRingTop[x], innerPointRingBtm[x + 1], innerPointRingBtm[x]);
+
+			// top and bottom
+			// addQuad(btm+1, btm, top+1, top)
+			AddQuad(outerPointRingTop[x + 1], outerPointRingTop[x], innerPointRingTop[x + 1], innerPointRingTop[x]);
+
+			// addQuad(top, top+1, btm, btm+1)
+			AddQuad(innerPointRingBtm[x + 1], innerPointRingBtm[x], outerPointRingBtm[x + 1], outerPointRingBtm[x]);
+		}
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -375,21 +505,97 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	if (a_fRadius < 0.01f)
 		a_fRadius = 0.01f;
 
-	//Sets minimum and maximum of subdivisions
-	if (a_nSubdivisions < 1)
-	{
-		GenerateCube(a_fRadius * 2.0f, a_v3Color);
-		return;
-	}
-	if (a_nSubdivisions > 6)
-		a_nSubdivisions = 6;
+	if (a_nSubdivisions < 3)
+		a_nSubdivisions = 3;
+
+	if (a_nSubdivisions > 360)
+		a_nSubdivisions = 360;
 
 	Release();
 	Init();
 
-	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	GenerateCube(1.0f, a_v3Color);
+
+	//// variables
+	//vector3 topPoint(0.0f, (2 * a_fRadius), 0.0f);
+	//vector3 btmPoint(0.0f, 0.0f, 0.0f);
+	//std::vector<std::vector<vector3>> pointRing(a_nSubdivisions);
+	//float ringPos = (2 * a_fRadius) / (a_nSubdivisions + 2);		// provides the height of the 
+	//float RING_POS = (2 * a_fRadius) / (a_nSubdivisions + 2);		// a constant value of Ring Position
+	//float ringScale = (2 * a_fRadius) / (a_nSubdivisions + 2);		
+	//
+	//// calculate positions around the base point and top point using subdivisions and radius
+	//int halfDivisions = a_nSubdivisions / 2;
+	//for (int p = 0; p < halfDivisions; p++)
+	//{
+	//	for (int q = 0; q < a_nSubdivisions; q++)
+	//	{
+	//		float pointX = a_fRadius * cos(((p * (2 * (float)PI)) / a_nSubdivisions));
+	//		float pointZ = a_fRadius * sin((p * (2 * (float)PI)) / a_nSubdivisions);
+	//
+	//		pointRing[p].push_back(vector3(pointX * (((a_nSubdivisions + 1) * a_fRadius) / (a_nSubdivisions + 2)), ringPos, pointZ * (((a_nSubdivisions + 1) * a_fRadius) / (a_nSubdivisions + 2))));
+	//	}
+	//	ringPos = ringPos + RING_POS;
+	//}
+	//
+	//for (int p = a_nSubdivisions-1; p > halfDivisions; p--)
+	//{
+	//	for (int q = 0; q < a_nSubdivisions; q++)
+	//	{
+	//		float pointX = a_fRadius * cos(((p * (2 * (float)PI)) / a_nSubdivisions));
+	//		float pointZ = a_fRadius * sin((p * (2 * (float)PI)) / a_nSubdivisions);
+	//
+	//		pointRing[p].push_back(vector3(pointX * (((a_nSubdivisions + 1) * a_fRadius) / (a_nSubdivisions + 2)), ringPos, pointZ * (((a_nSubdivisions + 1) * a_fRadius) / (a_nSubdivisions + 2))));
+	//	}
+	//	ringPos = ringPos + RING_POS;
+	//}
+	//
+	//// render out faces
+	//for (int x = 0; x < a_nSubdivisions; x++)
+	//{
+	//	for (int y = 0; y < a_nSubdivisions; y++)
+	//	{
+	//		if (x == 0)
+	//		{
+	//			if (y == a_nSubdivisions - 1)
+	//			{
+	//				// addTri(bottom, x, 0)
+	//				AddTri(btmPoint, pointRing[x][y], pointRing[x][0]);
+	//			}
+	//			else
+	//			{
+	//				// addTri(bottom, x, x++)
+	//				AddTri(btmPoint, pointRing[x][y], pointRing[x][y + 1]);
+	//			}
+	//		}
+	//		else if (x == a_nSubdivisions)
+	//		{
+	//			if (y == a_nSubdivisions - 1)
+	//			{
+	//				// addTri(top, x, 0)
+	//				AddTri(pointRing[x][0], pointRing[x][y], topPoint);
+	//			}
+	//			else
+	//			{
+	//				// addTri(top, x, x++)
+	//				AddTri(pointRing[x][y + 1], pointRing[x][y], topPoint);
+	//			}
+	//		}
+	//		else
+	//		{
+	//			if (y == a_nSubdivisions - 1)
+	//			{
+	//				// addQuad(btm0, btm, top0, top)
+	//				AddQuad(pointRing[x][0], pointRing[x][y], pointRing[x][0], pointRing[x][y]);
+	//			}
+	//			else
+	//			{
+	//				// addQuad(btm+1, btm, top+1, top)
+	//				AddQuad(pointRing[x][y + 1], pointRing[x][y], pointRing[x][y + 1], pointRing[x][y]);
+	//			}
+	//		}
+	//	}
+	//}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
