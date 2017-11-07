@@ -16,9 +16,19 @@ namespace Simplex
 
 class Application
 {
+	// variables 
+	vector3 m_v3Pos;			// contains the camera's position
+
+	quaternion m_qQuaternionX;	// contains the camera's rotation
+	quaternion m_qQuaternionY;
+	vector3 m_v3Orientation;	// camera's orientation
+	vector3 lookAt;
+	float angleX;
+	float angleY;
+
 	MyCamera* m_pCamera = nullptr; //Camera class
 	MyMeshManager* m_pMyMeshMngr = nullptr; //My Mesh Manager
-	String m_sProgrammer = "Alberto Bobadilla - labigm@rit.edu"; //Programmer
+	String m_sProgrammer = "James Preston Meeks - jpm4447@g.rit.edu"; //Programmer
 private:
 	static ImGuiObject gui; //GUI object
 
