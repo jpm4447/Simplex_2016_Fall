@@ -111,14 +111,20 @@ void MyRigidBody::SetModelMatrix(matrix4 a_m4ModelMatrix)
 	//get the new max and min for the global box
 	for (uint i = 1; i < 8; ++i)
 	{
-		if (m_v3MaxG.x < v3Corner[i].x) m_v3MaxG.x = v3Corner[i].x;
-		else if (m_v3MinG.x > v3Corner[i].x) m_v3MinG.x = v3Corner[i].x;
+		if (m_v3MaxG.x < v3Corner[i].x) 
+			m_v3MaxG.x = v3Corner[i].x;
+		else if (m_v3MinG.x > v3Corner[i].x) 
+			m_v3MinG.x = v3Corner[i].x;
 
-		if (m_v3MaxG.y < v3Corner[i].y) m_v3MaxG.y = v3Corner[i].y;
-		else if (m_v3MinG.y > v3Corner[i].y) m_v3MinG.y = v3Corner[i].y;
+		if (m_v3MaxG.y < v3Corner[i].y) 
+			m_v3MaxG.y = v3Corner[i].y;
+		else if (m_v3MinG.y > v3Corner[i].y) 
+			m_v3MinG.y = v3Corner[i].y;
 
-		if (m_v3MaxG.z < v3Corner[i].z) m_v3MaxG.z = v3Corner[i].z;
-		else if (m_v3MinG.z > v3Corner[i].z) m_v3MinG.z = v3Corner[i].z;
+		if (m_v3MaxG.z < v3Corner[i].z) 
+			m_v3MaxG.z = v3Corner[i].z;
+		else if (m_v3MinG.z > v3Corner[i].z) 
+			m_v3MinG.z = v3Corner[i].z;
 	}
 
 	//we calculate the distance between min and max vectors
