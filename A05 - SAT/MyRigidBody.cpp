@@ -287,6 +287,154 @@ uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 	(eSATResults::SAT_NONE has a value of 0)
 	*/
 
+	// variables
+	float rA, rB;			// holds radius to closest vector to the opposite object
+	float const EPSILON = 0.0001f;
+
+	matrix3 R;				// rotation matrix
+	matrix3 AbsR;			// absolute value of the rotation matrix
+
+	float aHalf[3];
+	aHalf[0] = m_v3HalfWidth.x;
+	aHalf[1] = m_v3HalfWidth.y;
+	aHalf[2] = m_v3HalfWidth.z;
+
+	float bHalf[3];
+	bHalf[0] = a_pOther->m_v3HalfWidth.x;
+	bHalf[1] = a_pOther->m_v3HalfWidth.y;
+	bHalf[2] = a_pOther->m_v3HalfWidth.z;
+
+	vector4 idVec[3];		
+	idVec[0] = vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	idVec[1] = vector4(0.0f, 1.0f, 0.0f, 1.0f);
+	idVec[2] = vector4(0.0f, 0.0f, 1.0f, 1.0f);
+	//idVec[0] = vector4(m_m4ToWorld[0][0], m_m4ToWorld[0][1], m_m4ToWorld[0][2], 1.0f);
+	//idVec[1] = vector4(m_m4ToWorld[1][0], m_m4ToWorld[1][1], m_m4ToWorld[1][2], 1.0f);
+	//idVec[2] = vector4(m_m4ToWorld[2][0], m_m4ToWorld[2][1], m_m4ToWorld[2][2], 1.0f);
+	//idVec[0] = m_m4ToWorld * vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	//idVec[1] = m_m4ToWorld * vector4(0.0f, 1.0f, 0.0f, 1.0f);
+	//idVec[2] = m_m4ToWorld * vector4(0.0f, 0.0f, 1.0f, 1.0f);
+
+	// calculate rotation matrix to convert B into A's coordinate frame
+	for (int x = 0; x < 3; x++)
+	{
+		for (int y = 0; y < 3; y++)
+		{
+			R[x][y] = glm::dot(idVec[x] * m_m4ToWorld, idVec[y] * a_pOther->m_m4ToWorld);
+			//DEBUG		//R[x][y] = glm::dot(idVec[x] * m_m4ToWorld, idVec[y] * a_pOther->m_m4ToWorld);
+		}
+	}
+
+	// calculate translation vector T
+	vector4 T = (vector4(a_pOther->m_v3Center, 1.0f) * a_pOther->m_m4ToWorld) - (vector4(m_v3Center, 1.0f) * m_m4ToWorld);
+	//DEBUG		//vector4 T = (vector4(m_v3Center, 1.0f) * m_m4ToWorld) - vector4(a_pOther->m_v3Center, 1.0f) * a_pOther->m_m4ToWorld;
+	
+	// bring T into A's coordinate frame
+	T = vector4(glm::dot(T, idVec[0]), glm::dot(T, idVec[1]), glm::dot(T, idVec[2]), 1.0f);				// DEBUG: TRY THIS FIRST change the 2nd value to idVec[2] instead of idVec[1]
+
+	// calculate the absolute value of the Rotation Matrix (R)
+	for (int x = 0; x < 3; x++) 
+	{
+		for (int y = 0; y < 3; y++)
+		{
+			AbsR[x][y] = glm::abs(R[x][y]) + EPSILON;
+		}
+	}
+
+	// Test axes L = A0, L = A1, L = A2
+	for (int x = 0; x < 3; x++)
+	{
+		rA = aHalf[x];
+		rB = bHalf[0] * AbsR[x][0] + bHalf[1] * AbsR[x][1] + bHalf[2] * AbsR[x][2];
+		if (glm::abs(T[x]) > rA + rB)
+		{
+			return 1;
+		}
+	}
+
+	// Test axes L = B0, L = B1, L = B2
+	for (int x = 0; x < 3; x++)
+	{
+		rA = aHalf[0] * AbsR[0][x] + aHalf[1] * AbsR[1][x] + aHalf[2] * AbsR[2][x];
+		rB = bHalf[x];
+		if (glm::abs(T[0] * R[0][x] + T[1] * R[1][x] + T[2] * R[2][x]) > rA + rB)
+		{
+			return 1;
+		}
+	}
+
+	// Test axis L = A0 x B0
+	rA = aHalf[1] * AbsR[2][0] + aHalf[2] * AbsR[1][0];
+	rB = bHalf[1] * AbsR[0][2] + bHalf[2] * AbsR[0][1];
+	if (glm::abs(T[2] * R[1][0] - T[1] * R[2][0]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A0 x B1
+	rA = aHalf[1] * AbsR[2][1] + aHalf[2] * AbsR[1][1];
+	rB = bHalf[0] * AbsR[0][2] + bHalf[2] * AbsR[0][0];
+	if (glm::abs(T[2] * R[1][1] - T[1] * R[2][1]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A0 x B2
+	rA = aHalf[1] * AbsR[2][2] + aHalf[2] * AbsR[1][2];
+	rB = bHalf[0] * AbsR[0][1] + bHalf[1] * AbsR[0][0];
+	if (glm::abs(T[2] * R[1][2] - T[1] * R[2][2]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A1 x B0
+	rA = aHalf[0] * AbsR[2][0] + aHalf[2] * AbsR[0][0];
+	rB = bHalf[1] * AbsR[1][2] + bHalf[2] * AbsR[1][1];
+	if (glm::abs(T[0] * R[2][0] - T[2] * R[0][0]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A1 x B1
+	rA = aHalf[0] * AbsR[2][1] + aHalf[2] * AbsR[0][1];
+	rB = bHalf[0] * AbsR[1][2] + bHalf[2] * AbsR[1][0];
+	if (glm::abs(T[0] * R[2][1] - T[2] * R[0][1]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A1 x B2
+	rA = aHalf[0] * AbsR[2][2] + aHalf[2] * AbsR[0][2];
+	rB = bHalf[0] * AbsR[1][1] + bHalf[1] * AbsR[1][0];
+	if (glm::abs(T[0] * R[2][2] - T[2] * R[0][2]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A2 x B0
+	rA = aHalf[0] * AbsR[1][0] + aHalf[1] * AbsR[0][0];
+	rB = bHalf[1] * AbsR[2][2] + bHalf[2] * AbsR[2][1];
+	if (glm::abs(T[1] * R[0][0] - T[0] * R[1][0]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A2 x B1
+	rA = aHalf[0] * AbsR[1][1] + aHalf[1] * AbsR[0][1];
+	rB = bHalf[0] * AbsR[2][2] + bHalf[2] * AbsR[2][0];
+	if (glm::abs(T[1] * R[0][1] - T[0] * R[1][1]) > rA + rB)
+	{
+		return 1;
+	}
+
+	// Test axis L = A2 x B2
+	rA = aHalf[0] * AbsR[1][2] + aHalf[1] * AbsR[0][2];
+	rB = bHalf[0] * AbsR[2][1] + bHalf[1] * AbsR[2][0];
+	if (glm::abs(T[1] * R[0][2] - T[0] * R[1][2]) > rA + rB)
+	{
+		return 1;
+	}
+
 	//there is no axis test that separates this two objects
 	return eSATResults::SAT_NONE;
 }
