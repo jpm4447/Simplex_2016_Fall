@@ -52,10 +52,19 @@ void Application::DrawGUI(void)
 			ImGui::Text(" PageUp: Increment Octant display\n");
 			ImGui::Text(" PageDw: Decrement Octant display\n");
 			ImGui::Separator();
-			ImGui::Text("	  -: Increment Octree subdivision\n");
-			ImGui::Text("	  +: Decrement Octree subdivision\n");
+			ImGui::Text("	  Z: Increment Octree subdivision\n");
+			ImGui::Text("	  X: Decrement Octree subdivision\n");
 			ImGui::Separator();
-			ImGui::TextColored(ImColor(255, 255, 0), "Octree\n");
+			ImGui::Text("	  Tab: To turn Octree On and Off\n");
+			ImGui::Separator();
+			if (toggle == true)
+			{
+				ImGui::Text("      Octree: On\n");
+			}
+			else
+			{
+				ImGui::Text("      Octree: Off\n");
+			}
 		}
 		ImGui::End();
 	}

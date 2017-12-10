@@ -34,6 +34,17 @@ void Application::InitVariables(void)
 }
 void Application::Update(void)
 {
+	if (root != nullptr)
+	{
+		m_pEntityMngr->ClearDimensionSetAll();
+		SafeDelete(root);
+	}
+
+	if (toggle == true)
+	{
+		root = new Octree(m_uOctantLevels, 5);
+	}
+	
 	//Update the system so it knows how much time has passed since the last call
 	m_pSystem->Update();
 
@@ -54,8 +65,11 @@ void Application::Display(void)
 	// Clear the screen
 	ClearScreen();
 
-	//display octree
-	//m_pRoot->Display();
+	// draw the octree IF the wireframe is enabled
+	if (toggle)
+	{
+		root->Display(m_uOctantID, C_BLACK);
+	}
 	
 	// draw a skybox
 	m_pMeshMngr->AddSkyboxToRenderList();
